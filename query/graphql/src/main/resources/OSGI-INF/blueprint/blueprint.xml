@@ -21,7 +21,7 @@
 
     <reference id="configuratorFactory"
                interface="org.codice.ddf.admin.configurator.ConfiguratorFactory"
-               availability="mandatory" filter="(type=txact)"/>
+               availability="optional" filter="(type=txact)"/>
 
     <bean id="graphQLServlet" class="org.codice.ddf.admin.graphql.GraphQLServletImpl" >
         <property name="actionCreators" ref="actionCreators" />

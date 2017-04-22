@@ -57,6 +57,7 @@
     <feature name="admin-beta-wcpm" install="manual" version="${project.version}"
              description="DDF Admin Web Context Policy Manager (Beta)">
         <feature prerequisite="true">admin-beta-core</feature>
+        <bundle>mvn:org.apache.commons/commons-lang3/3.5</bundle>
         <bundle>mvn:org.codice.ddf.admin.beta/admin-query-wcpm/${project.version}</bundle>
     </feature>
 

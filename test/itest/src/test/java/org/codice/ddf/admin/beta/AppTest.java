@@ -13,22 +13,29 @@
  **/
 package org.codice.ddf.admin.beta;
 
-import static org.ops4j.pax.exam.CoreOptions.bootClasspathLibrary;
 import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.repository;
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
+import static org.ops4j.pax.exam.CoreOptions.when;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.debugConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.replaceConfigurationFile;
+import static org.osgi.framework.FrameworkUtil.getBundle;
+
+import static junit.framework.TestCase.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import javax.inject.Inject;
 
+
+import org.codice.ddf.admin.configurator.ConfiguratorFactory;
+import org.codice.ddf.security.policy.context.ContextPolicyManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -37,6 +44,10 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerMethod.class)
@@ -55,7 +66,8 @@ public class AppTest {
     public Option[] distributionSettings() {
         return new Option[] {
                 // KarafDistributionOption.debugConfiguration("5005", true),
-                replaceConfigurationFile("etc/custom.properties",  new File("target/test-classes/custom.properties")),
+//                replaceConfigurationFile("etc/custom.properties",  new File("target/test-classes/custom.properties")),
+                debugConfiguration("5005", Boolean.getBoolean("isDebugEnabled")),
                 karafDistributionConfiguration()
                         .frameworkUrl(maven()
                                 .groupId("org.apache.karaf")
@@ -69,33 +81,34 @@ public class AppTest {
 
     public Option[] featuresToAddToFeatureRepo() {
         return new Option[] {
-                features(maven().groupId("org.codice.ddf")
-                        .artifactId("kernel")
-                        .type("xml")
-                        .classifier("features")
-                        .version("2.10.2")),
-
-                features(maven().groupId("ddf.platform")
-                        .artifactId("platform-app")
-                        .type("xml")
-                        .classifier("features")
-                        .version("2.10.2"))};
+//                features(maven().groupId("org.codice.ddf")
+//                        .artifactId("kernel")
+//                        .type("xml")
+//                        .classifier("features")
+//                        .version("2.10.2")),
+//
+//                features(maven().groupId("ddf.platform")
+//                        .artifactId("platform-app")
+//                        .type("xml")
+//                        .classifier("features")
+//                        .version("2.10.2"))
+        };
     }
 
     public Option[] systemBundles() {
         return new Option[] {
-                bootClasspathLibrary(
-                        mavenBundle().groupId("org.bouncycastle")
-                        .artifactId("bcprov-jdk15on")
-                        .version("1.54")).beforeFramework(),
-                bootClasspathLibrary(
-                        mavenBundle().groupId("org.bouncycastle")
-                                .artifactId("bcmail-jdk15on")
-                                .version("1.54")).beforeFramework(),
-                bootClasspathLibrary(
-                        mavenBundle().groupId("org.bouncycastle")
-                                .artifactId("bcpkix-jdk15on")
-                                .version("1.54")).beforeFramework()
+//                bootClasspathLibrary(
+//                        mavenBundle().groupId("org.bouncycastle")
+//                        .artifactId("bcprov-jdk15on")
+//                        .version("1.54")).beforeFramework(),
+//                bootClasspathLibrary(
+//                        mavenBundle().groupId("org.bouncycastle")
+//                                .artifactId("bcmail-jdk15on")
+//                                .version("1.54")).beforeFramework(),
+//                bootClasspathLibrary(
+//                        mavenBundle().groupId("org.bouncycastle")
+//                                .artifactId("bcpkix-jdk15on")
+//                                .version("1.54")).beforeFramework()
         };
     }
 
@@ -105,13 +118,14 @@ public class AppTest {
                         .artifactId("admin-itest-dependencies")
                         .type("xml")
                         .classifier("features")
-                        .version("0.1.3-SNAPSHOT"), "admin-itest-system-packages"),
-                 features(
-                        maven().groupId("org.codice.ddf.admin.beta")
-                                .artifactId("admin-query-app")
-                                .type("xml")
-                                .classifier("features")
-                                .version("0.1.3-SNAPSHOT"), "graphql-dependencies", "admin-beta-temp-configurator")
+                        .version("0.1.3-SNAPSHOT"), "admin-app")
+//                ,
+//                 features(
+//                        maven().groupId("org.codice.ddf.admin.beta")
+//                                .artifactId("admin-query-app")
+//                                .type("xml")
+//                                .classifier("features")
+//                                .version("0.1.3-SNAPSHOT"), "graphql-dependencies", "admin-beta-temp-configurator")
         };
     }
 
@@ -131,8 +145,34 @@ public class AppTest {
                 .toArray(Option[]::new);
     }
 
+    @Inject
+    private ConfigurationAdmin configAdmin;
+
     @Test
-    public void getHelloService() {
+    public void getHelloService() throws IOException {
+        ContextPolicyManager contextPolicyManager = getService(ContextPolicyManager.class);
+        org.osgi.service.cm.Configuration policyManagerConfig = getServiceConfig("org.codice.ddf.security.policy.context.impl.PolicyManager");
+
+        if(contextPolicyManager.getAllContextPolicies().isEmpty() || policyManagerConfig == null) {
+            fail("Failed to retrieve context policy manager reference or service properties.");
+        }
         System.out.println("Hello world!");
+    }
+
+    public org.osgi.service.cm.Configuration getServiceConfig(String pid) {
+        try {
+            return configAdmin.getConfiguration(pid);
+        } catch (Exception e) {
+            fail("Unable to retrieve service configuration for: " + pid);
+        }
+        return null;
+    }
+
+    public<T> T getService(Class<T> clazz)  {
+        return getBundleContext().getService(getBundleContext().getServiceReference(clazz));
+    }
+
+    public BundleContext getBundleContext() {
+        return FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     }
 }

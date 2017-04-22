@@ -13,6 +13,7 @@
  */
 package org.codice.ddf.admin.ldap.actions.commons.services;
 
+import static org.codice.ddf.admin.common.services.ServicesCommons.resolveProperty;
 import static org.codice.ddf.admin.ldap.actions.commons.services.LdapClaimsHandlerServiceProperties.SERVICE_PID_KEY;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.LOGIN;
 import static org.codice.ddf.admin.ldap.fields.connection.LdapEncryptionMethodField.LDAPS;
@@ -27,7 +28,6 @@ import org.codice.ddf.admin.ldap.fields.config.LdapConfigurationField;
 import org.codice.ddf.admin.ldap.fields.config.LdapSettingsField;
 import org.codice.ddf.admin.ldap.fields.connection.LdapBindUserInfo;
 import org.codice.ddf.admin.ldap.fields.connection.LdapConnectionField;
-import org.codice.ddf.configuration.PropertyResolver;
 
 public class LdapLoginServiceProperties {
     public static final Pattern URI_MATCHER = Pattern.compile("\\w*://.*");
@@ -126,7 +126,7 @@ public class LdapLoginServiceProperties {
 
     public static URI getUriFromProperty(String ldapUrl) {
         if (StringUtils.isNotEmpty(ldapUrl)) {
-            ldapUrl = PropertyResolver.resolveProperties(ldapUrl);
+            ldapUrl = resolveProperty(ldapUrl);
             if (!URI_MATCHER.matcher(ldapUrl)
                     .matches()) {
                 ldapUrl = "ldap://" + ldapUrl;

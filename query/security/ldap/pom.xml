@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.codice.ddf.admin.beta</groupId>
             <artifactId>configurator-api</artifactId>
-            <version>0.1.2-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ddf.lib</groupId>
@@ -111,6 +111,12 @@
                             admin-query-common,
                             admin-query-security-common
                         </Embed-Dependency>
+                        <Import-Package>
+                            <!--TODO find who is exporting these-->
+                            !com.sun.security.auth.callback,
+                            !com.sun.security.auth.module,
+                            *
+                        </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
