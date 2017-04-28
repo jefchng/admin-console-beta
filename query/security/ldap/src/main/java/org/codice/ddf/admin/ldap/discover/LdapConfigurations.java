@@ -23,6 +23,7 @@ import org.codice.ddf.admin.common.fields.base.ListFieldImpl;
 import org.codice.ddf.admin.common.fields.common.PidField;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.ldap.commons.services.LdapServiceCommons;
+import org.codice.ddf.admin.ldap.commons.LdapTestingUtils;
 import org.codice.ddf.admin.ldap.fields.config.LdapConfigurationField;
 
 import com.google.common.collect.ImmutableList;
@@ -39,6 +40,7 @@ public class LdapConfigurations extends BaseFunctionField<ListField<LdapConfigur
 
     private ConfiguratorFactory configuratorFactory;
     private LdapServiceCommons serviceCommons;
+    private LdapTestingUtils testingUtils;
 
     public LdapConfigurations(ConfiguratorFactory configuratorFactory) {
         super(NAME, DESCRIPTION, new ListFieldImpl<>(CONFIGS_ARG_NAME, LdapConfigurationField.class));
@@ -47,6 +49,7 @@ public class LdapConfigurations extends BaseFunctionField<ListField<LdapConfigur
 
         this.configuratorFactory = configuratorFactory;
         serviceCommons = new LdapServiceCommons(configuratorFactory);
+        testingUtils = new LdapTestingUtils();
     }
 
     @Override
@@ -57,6 +60,18 @@ public class LdapConfigurations extends BaseFunctionField<ListField<LdapConfigur
     @Override
     public ListField<LdapConfigurationField> performFunction() {
         return serviceCommons.getLdapConfigurations(configuratorFactory);
+    }
+
+    @Override
+    public void validate() {
+        super.validate();
+        if (containsErrorMsgs()) {
+            return;
+        }
+
+        if (pid.getValue() != null && !testingUtils.serviceExists(pid.getValue(), configuratorFactory.getConfigReader())) {
+            addArgumentMessage(serviceDoesNotExistError(pid.path()));
+        }
     }
 
     @Override

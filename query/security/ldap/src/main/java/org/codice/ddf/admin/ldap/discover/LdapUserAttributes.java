@@ -66,14 +66,11 @@ public class LdapUserAttributes extends BaseFunctionField<ListField<StringField>
     @Override
     public ListField<StringField> performFunction() {
 
-        LdapConnectionAttempt ldapConnectionAttempt =
-                utils.bindUserToLdapConnection(config.connectionField(), config.bindUserInfoField());
-        addArgumentMessages(ldapConnectionAttempt.messages());
+        LdapConnectionAttempt ldapConnectionAttempt = utils.bindUserToLdapConnection(config.connectionField(), config.bindUserInfoField());
+        addMessages(ldapConnectionAttempt.messages());
+        addArgumentMessages(ldapConnectionAttempt.argumentMessages());
 
-        if (!ldapConnectionAttempt.connection()
-                .isPresent()) {
-            // TODO: tbatie - 4/3/17 - Make a toString for LDAPConfig
-            LOGGER.warn("Error binding to LDAP server with config: {}", config.toString());
+        if (!ldapConnectionAttempt.connection().isPresent()) {
             return null;
         }
 

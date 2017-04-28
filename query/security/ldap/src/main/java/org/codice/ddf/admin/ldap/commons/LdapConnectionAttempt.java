@@ -13,6 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.commons;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,19 +22,18 @@ import java.util.Optional;
 import org.codice.ddf.admin.api.report.Message;
 import org.forgerock.opendj.ldap.Connection;
 
-public class LdapConnectionAttempt {
+public class LdapConnectionAttempt implements Closeable {
 
+    // TODO: tbatie - 5/1/17 - Change this to maintain an arg messages and return value list of msgs
+    private List<Message> argumentMsgs;
     private List<Message> msgs;
+
     private Optional<Connection> connection;
 
     public LdapConnectionAttempt() {
-        this.msgs = new ArrayList<>();
+        msgs = new ArrayList<>();
+        argumentMsgs = new ArrayList<>();
         connection = Optional.empty();
-    }
-
-    public LdapConnectionAttempt(Message msg) {
-        this();
-        msgs.add(msg);
     }
 
     public LdapConnectionAttempt(Connection connection) {
@@ -40,11 +41,41 @@ public class LdapConnectionAttempt {
         this.connection = Optional.of(connection);
     }
 
+    public LdapConnectionAttempt addArgumentMessage(Message msg) {
+        argumentMsgs.add(msg);
+        return this;
+    }
+
+    public LdapConnectionAttempt addMessage(Message msg) {
+        msgs.add(msg);
+        return this;
+    }
+
     public List<Message> messages() {
         return msgs;
     }
 
+    public List<Message> argumentMessages() {
+        return argumentMsgs;
+    }
+
     public Optional<Connection> connection() {
         return connection;
+    }
+
+    public LdapConnectionAttempt connection(Optional<Connection> connection) {
+        if(connection == null) {
+            this.connection = Optional.empty();
+        } else {
+            this.connection = connection;
+        }
+        return this;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (connection.isPresent() && !connection.get().isClosed()) {
+            connection.get().close();
+        }
     }
 }

@@ -13,13 +13,10 @@
  */
 package org.codice.ddf.admin.ldap.embedded;
 
-import static org.codice.ddf.admin.ldap.embedded.EmbeddedLdapServiceProperties.ALL_DEFAULT_EMBEDDED_LDAP_CONFIG_FEATURE;
-import static org.codice.ddf.admin.ldap.embedded.EmbeddedLdapServiceProperties.DEFAULT_EMBEDDED_LDAP_CLAIMS_HANDLER_CONFIG_FEATURE;
-import static org.codice.ddf.admin.ldap.embedded.EmbeddedLdapServiceProperties.DEFAULT_EMBEDDED_LDAP_LOGIN_CONFIG_FEATURE;
-import static org.codice.ddf.admin.ldap.embedded.EmbeddedLdapServiceProperties.EMBEDDED_LDAP_FEATURE;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.ATTRIBUTE_STORE;
-import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.LOGIN;
-import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.LOGIN_AND_ATTRIBUTE_STORE;
+import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION;
+import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION_AND_ATTRIBUTE_STORE;
 import static org.codice.ddf.admin.security.common.services.LdapClaimsHandlerServiceProperties.LDAP_CLAIMS_HANDLER_FEATURE;
 import static org.codice.ddf.admin.security.common.services.LdapLoginServiceProperties.LDAP_LOGIN_FEATURE;
 
@@ -29,19 +26,14 @@ import org.codice.ddf.admin.api.DataType;
 import org.codice.ddf.admin.api.fields.FunctionField;
 import org.codice.ddf.admin.common.fields.base.BaseFunctionField;
 import org.codice.ddf.admin.common.fields.base.scalar.BooleanField;
-import org.codice.ddf.admin.common.report.message.ErrorMessage;
 import org.codice.ddf.admin.configurator.Configurator;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.configurator.OperationReport;
 import org.codice.ddf.admin.ldap.fields.config.LdapUseCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 
 public class InstallEmbeddedLdap extends BaseFunctionField<BooleanField> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(InstallEmbeddedLdap.class);
 
     public static final String NAME = "installEmbeddedLdap";
     public static final String DESCRIPTION = "Installs the internal embedded LDAP. Used for testing purposes only. LDAP port: 1389, LDAPS port: 1636, ADMIN port: 4444";
@@ -53,6 +45,7 @@ public class InstallEmbeddedLdap extends BaseFunctionField<BooleanField> {
         super(NAME, DESCRIPTION, new BooleanField());
         useCase = new LdapUseCase();
         updateArgumentPaths();
+
         this.configuratorFactory = configuratorFactory;
     }
 
@@ -66,39 +59,31 @@ public class InstallEmbeddedLdap extends BaseFunctionField<BooleanField> {
         // TODO: tbatie - 4/4/17 - This should return back the setup config
         Configurator configurator = configuratorFactory.getConfigurator();
         switch (useCase.getValue()) {
-        case LOGIN:
-            configurator.startFeature(EMBEDDED_LDAP_FEATURE);
+        case AUTHENTICATION:
+            configurator.startFeature(EmbeddedLdapServiceProperties.EMBEDDED_LDAP_FEATURE);
             configurator.startFeature(LDAP_LOGIN_FEATURE);
-            configurator.startFeature(DEFAULT_EMBEDDED_LDAP_LOGIN_CONFIG_FEATURE);
+            configurator.startFeature(EmbeddedLdapServiceProperties.DEFAULT_EMBEDDED_LDAP_LOGIN_CONFIG_FEATURE);
             break;
         case ATTRIBUTE_STORE:
-            configurator.startFeature(EMBEDDED_LDAP_FEATURE);
+            configurator.startFeature(EmbeddedLdapServiceProperties.EMBEDDED_LDAP_FEATURE);
             configurator.startFeature(LDAP_CLAIMS_HANDLER_FEATURE);
-            configurator.startFeature(DEFAULT_EMBEDDED_LDAP_CLAIMS_HANDLER_CONFIG_FEATURE);
+            configurator.startFeature(EmbeddedLdapServiceProperties.DEFAULT_EMBEDDED_LDAP_CLAIMS_HANDLER_CONFIG_FEATURE);
             break;
-        case LOGIN_AND_ATTRIBUTE_STORE:
-            configurator.startFeature(EMBEDDED_LDAP_FEATURE);
+        case AUTHENTICATION_AND_ATTRIBUTE_STORE:
+            configurator.startFeature(EmbeddedLdapServiceProperties.EMBEDDED_LDAP_FEATURE);
             configurator.startFeature(LDAP_LOGIN_FEATURE);
             configurator.startFeature(LDAP_CLAIMS_HANDLER_FEATURE);
-            configurator.startFeature(ALL_DEFAULT_EMBEDDED_LDAP_CONFIG_FEATURE);
+            configurator.startFeature(EmbeddedLdapServiceProperties.ALL_DEFAULT_EMBEDDED_LDAP_CONFIG_FEATURE);
             break;
-        default:
-            LOGGER.debug("Unrecognized LDAP use case \"{}\". No commits will be made. ",
-                    useCase.getValue());
-            // TODO: tbatie - 4/4/17 - change this to specify the arg that was unknown
-            addResultMessage(new ErrorMessage("FAILED_PERSIST"));
-            return new BooleanField(false);
         }
 
         OperationReport report = configurator.commit();
 
         if(report.containsFailedResults()) {
-            addResultMessage(new ErrorMessage("CANNOT_INSTALL"));
-            return new BooleanField(false);
-
+            addResultMessage(internalError());
         }
 
-        return new BooleanField(true);
+        return new BooleanField(report.containsFailedResults());
     }
 
     @Override

@@ -16,22 +16,21 @@ package org.codice.ddf.admin.ldap;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codice.ddf.admin.api.Field;
-import org.codice.ddf.admin.api.fields.FunctionField;
-import org.codice.ddf.admin.common.fields.base.function.BaseFieldProvider;
+import org.codice.ddf.admin.api.action.Action;
+import org.codice.ddf.admin.common.actions.BaseActionCreator;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.ldap.discover.LdapConfigurations;
-import org.codice.ddf.admin.ldap.discover.LdapQuery;
 import org.codice.ddf.admin.ldap.discover.LdapRecommendedSettings;
+import org.codice.ddf.admin.ldap.discover.LdapUserAttributes;
+import org.codice.ddf.admin.ldap.discover.LdapQuery;
 import org.codice.ddf.admin.ldap.discover.LdapTestBind;
 import org.codice.ddf.admin.ldap.discover.LdapTestConnection;
 import org.codice.ddf.admin.ldap.discover.LdapTestSettings;
-import org.codice.ddf.admin.ldap.discover.LdapUserAttributes;
 import org.codice.ddf.admin.ldap.embedded.InstallEmbeddedLdap;
 import org.codice.ddf.admin.ldap.persist.DeleteLdapConfiguration;
 import org.codice.ddf.admin.ldap.persist.SaveLdapConfiguration;
 
-public class LdapFieldProvider extends BaseFieldProvider {
+public class LdapFieldProvider extends BaseActionCreator {
 
     public static final String NAME = "ldap";
 
@@ -39,51 +38,28 @@ public class LdapFieldProvider extends BaseFieldProvider {
 
     public static final String DESCRIPTION = "Facilities for interacting with LDAP servers.";
 
-    //Discovery functions
-    private LdapRecommendedSettings getRecommendedSettings;
-    private LdapTestConnection testConnection;
-    private LdapTestBind testBind;
-    private LdapTestSettings testSettings;
-    private LdapQuery runLdapQuery;
-    private LdapUserAttributes getLdapUserAttributes;
-    private LdapConfigurations getLdapConfigs;
-
-    //Mutation functions
-    private SaveLdapConfiguration saveConfig;
-    private DeleteLdapConfiguration deleteConfig;
-    private InstallEmbeddedLdap installEmbeddedLdap;
+    private ConfiguratorFactory configuratorFactory;
 
     public LdapFieldProvider(ConfiguratorFactory configuratorFactory) {
         super(NAME, TYPE_NAME, DESCRIPTION);
-        getRecommendedSettings = new LdapRecommendedSettings();
-        testConnection = new LdapTestConnection();
-        testBind = new LdapTestBind();
-        testSettings = new LdapTestSettings();
-        runLdapQuery = new LdapQuery();
-        getLdapUserAttributes = new LdapUserAttributes();
-        getLdapConfigs = new LdapConfigurations(configuratorFactory);
-
-        saveConfig = new SaveLdapConfiguration(configuratorFactory);
-        deleteConfig = new DeleteLdapConfiguration(configuratorFactory);
-        installEmbeddedLdap = new InstallEmbeddedLdap(configuratorFactory);
-        updateInnerFieldPaths();
+        this.configuratorFactory = configuratorFactory;
     }
 
     @Override
-    public List<Field> getDiscoveryFields() {
-        return Arrays.asList(testConnection,
-                testBind,
-                getRecommendedSettings,
-                testSettings,
-                runLdapQuery,
-                getLdapUserAttributes,
-                getLdapConfigs);
+    public List<Action> getDiscoveryActions() {
+        return Arrays.asList(new LdapRecommendedSettings(),
+                new LdapTestConnection(),
+                new LdapTestBind(),
+                new LdapTestSettings(),
+                new LdapQuery(),
+                new LdapUserAttributes(),
+                new LdapConfigurations(configuratorFactory));
     }
 
     @Override
-    public List<FunctionField> getMutationFunctions() {
-        return Arrays.asList(saveConfig,
-                deleteConfig,
-                installEmbeddedLdap);
+    public List<Action> getPersistActions() {
+        return Arrays.asList(new SaveLdapConfiguration(configuratorFactory),
+                new DeleteLdapConfiguration(configuratorFactory),
+                new InstallEmbeddedLdap(configuratorFactory));
     }
 }

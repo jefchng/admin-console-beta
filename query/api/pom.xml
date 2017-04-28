@@ -26,6 +26,13 @@
     <artifactId>admin-query-api</artifactId>
     <packaging>bundle</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+            <version>LATEST</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>

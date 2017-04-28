@@ -13,6 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.persist;
 
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
+
 import java.util.List;
 
 import org.codice.ddf.admin.api.DataType;
@@ -24,6 +26,7 @@ import org.codice.ddf.admin.common.fields.common.PidField;
 import org.codice.ddf.admin.configurator.Configurator;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.configurator.OperationReport;
+import org.codice.ddf.admin.ldap.commons.LdapTestingUtils;
 import org.codice.ddf.admin.ldap.commons.services.LdapServiceCommons;
 import org.codice.ddf.admin.ldap.fields.config.LdapConfigurationField;
 
@@ -38,6 +41,7 @@ public class DeleteLdapConfiguration extends BaseFunctionField<ListField<LdapCon
     private PidField pid;
     private ConfiguratorFactory configuratorFactory;
     private LdapServiceCommons serviceCommons;
+    private LdapTestingUtils testingUtils;
 
     public DeleteLdapConfiguration(ConfiguratorFactory configuratorFactory) {
         super(NAME, DESCRIPTION, new ListFieldImpl<>("configs", LdapConfigurationField.class));
@@ -45,6 +49,8 @@ public class DeleteLdapConfiguration extends BaseFunctionField<ListField<LdapCon
         updateArgumentPaths();
         this.configuratorFactory = configuratorFactory;
         serviceCommons = new LdapServiceCommons(configuratorFactory);
+        testingUtils = new LdapTestingUtils();
+
     }
 
     @Override
@@ -59,9 +65,26 @@ public class DeleteLdapConfiguration extends BaseFunctionField<ListField<LdapCon
         OperationReport report =
                 configurator.commit("LDAP Configuration deleted for servicePid: {}",
                         pid.getValue());
-        // TODO: tbatie - 4/3/17 - Add error reporting here
+
+        if(report.containsFailedResults()) {
+            addMessage(internalError());
+        }
+
         return serviceCommons.getLdapConfigurations(configuratorFactory);
     }
+
+    @Override
+    public void validate() {
+        super.validate();
+        if (containsErrorMsgs()) {
+            return;
+        }
+
+        if (!testingUtils.serviceExists(pid.getValue(), configuratorFactory.getConfigReader())) {
+            addArgumentMessage(LdapMessages.serviceDoesNotExistError(pid.path()));
+        }
+    }
+
 
     @Override
     public FunctionField<ListField<LdapConfigurationField>> newInstance() {
