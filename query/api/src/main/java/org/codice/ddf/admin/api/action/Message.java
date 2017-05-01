@@ -18,7 +18,7 @@ import java.util.List;
 public interface Message {
     MessageType getType();
 
-    String getCode();
+    String getMessage();
 
     List<String> getPath();
 

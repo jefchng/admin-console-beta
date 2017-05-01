@@ -22,23 +22,23 @@ public abstract class BaseMessage implements Message {
 
     private MessageType type;
 
-    private String code;
+    private String message;
 
     private List<String> path;
 
-    public BaseMessage(MessageType type, String code) {
+    public BaseMessage(MessageType type, String message) {
         this.type = type;
-        this.code = code;
+        this.message = message;
         path = new LinkedList<>();
     }
 
-    public BaseMessage(MessageType type, String code, String pathOrigin) {
-        this(type, code);
+    public BaseMessage(MessageType type, String message, String pathOrigin) {
+        this(type, message);
         path.add(pathOrigin);
     }
 
-    public BaseMessage(MessageType type, String code, List<String> path) {
-        this(type, code);
+    public BaseMessage(MessageType type, String message, List<String> path) {
+        this(type, message);
         this.path.addAll(path);
     }
 
@@ -47,9 +47,8 @@ public abstract class BaseMessage implements Message {
         return type;
     }
 
-    @Override
-    public String getCode() {
-        return code;
+    public String getMessage() {
+        return message;
     }
 
     @Override

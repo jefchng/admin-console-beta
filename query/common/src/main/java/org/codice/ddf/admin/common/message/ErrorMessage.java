@@ -31,6 +31,6 @@ public class ErrorMessage extends BaseMessage {
 
     @Override
     public ErrorMessage copy() {
-        return new ErrorMessage(getCode(), getPath());
+        return new ErrorMessage(getMessage(), getPath());
     }
 }

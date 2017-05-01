@@ -31,6 +31,6 @@ public class WarningMessage extends BaseMessage {
 
     @Override
     public WarningMessage copy() {
-        return new WarningMessage(getCode(), getPath());
+        return new WarningMessage(getMessage(), getPath());
     }
 }
