@@ -2,12 +2,18 @@ import React from 'react'
 
 import Mount from 'react-mount'
 
+import { graphql, gql, withApollo } from 'react-apollo'
+
 import Stage from 'components/Stage'
 import Title from 'components/Title'
 import Description from 'components/Description'
 import Action from 'components/Action'
 import ActionGroup from 'components/ActionGroup'
 import Message from 'components/Message'
+
+import { testConnection } from '../graphql-queries'
+
+import { setMessages } from 'admin-wizard'
 
 import {
   Hostname,
@@ -17,9 +23,11 @@ import {
 
 const NetworkSettings = (props) => {
   const {
+    client,
+    data,
     setDefaults,
     prev,
-    test,
+    next,
     submitting,
     disabled,
     messages = []
@@ -55,7 +63,17 @@ const NetworkSettings = (props) => {
         <Action
           primary
           label='next'
-          onClick={test}
+          onClick={ () => client.query(
+            testConnection.withVariables({
+              hostname: 'localhost',
+              port: 8993,
+              encryption: 'ldaps'
+            }))
+            .then(checkConnect({
+              onPass: () => next,
+              onFail: () => console.log('Could not connect to LDAP machine')}))
+            .catch(() => console.log('Network Error'))
+          }
           disabled={disabled}
           nextStageId='bind-settings'
           testId='connection' />
@@ -66,4 +84,12 @@ const NetworkSettings = (props) => {
   )
 }
 
-export default NetworkSettings
+const checkConnect = ({ onPass = () => {}, onFail = () => {} }) => ({ data }) => {
+  if (data.ldap.testConnect) {
+    onPass()
+  } else {
+    onFail()
+  }
+}
+
+export default withApollo(NetworkSettings)
