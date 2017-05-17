@@ -13,10 +13,15 @@
  **/
 package org.codice.ddf.admin.common.fields.common;
 
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.duplicateMapKeyError;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.codice.ddf.admin.api.Field;
 import org.codice.ddf.admin.api.fields.ListField;
+import org.codice.ddf.admin.api.report.Message;
 import org.codice.ddf.admin.common.fields.base.BaseObjectField;
 import org.codice.ddf.admin.common.fields.base.ListFieldImpl;
 
@@ -28,15 +33,15 @@ public class MapField extends BaseObjectField {
 
     public static final String FIELD_TYPE_NAME = "Map";
 
-    public static final String DESCRIPTION = "A map containing a list of key value pairs.";
+    public static final String DESCRIPTION = "A map backed by a list of key value pairs.";
 
-    public static final String ENTRIES_FIELD_NAME = "entries";
+    public static final String ENTRIES = "entries";
 
-    private ListField<PairField> entries;
+    protected ListField<PairField> entries;
 
     public MapField() {
         super(DEFAULT_FIELD_NAME, FIELD_TYPE_NAME, DESCRIPTION);
-        entries = new ListFieldImpl<>(ENTRIES_FIELD_NAME, PairField.class);
+        entries = new ListFieldImpl<>(ENTRIES, PairField.class);
         updateInnerFieldPaths();
     }
 
@@ -46,7 +51,66 @@ public class MapField extends BaseObjectField {
     }
 
     public MapField put(String key, String value) {
-        entries.add(new PairField().key(key).value(value));
+        if (containsKey(key)) {
+            updateKeyValue(key, value);
+        } else {
+            add(key, value);
+        }
         return this;
+    }
+
+    public boolean containsValue(String value) {
+        return entries.getList()
+                .stream()
+                .anyMatch(pair -> pair.value()
+                        .equals(value));
+    }
+
+    public boolean containsKey(String key) {
+        return entries.getList()
+                .stream()
+                .anyMatch(pair -> pair.key()
+                        .equals(key));
+    }
+
+    public boolean isEmpty() {
+        return entries.getList()
+                .isEmpty();
+    }
+
+    @Override
+    public List<Message> validate() {
+        List<Message> validationMsgs = new ArrayList<>();
+        long skip = 0;
+        for (PairField pairField : entries.getList()) {
+            List<PairField> duplicatePairs = entries.getList()
+                    .stream()
+                    .skip(skip)
+                    .filter(pair -> pair.key()
+                            .equals(pairField.key()))
+                    .collect(Collectors.toList());
+
+            if (duplicatePairs.size() > 1) {
+                validationMsgs.add(duplicateMapKeyError(duplicatePairs.get(1)
+                        .path()));
+                break;
+            }
+            skip++;
+        }
+        return validationMsgs;
+    }
+
+    private void add(String key, String value) {
+        entries.add(new PairField().key(key)
+                .value(value));
+    }
+
+    private void updateKeyValue(String key, String value) {
+        entries.getList()
+                .stream()
+                .filter(p -> p.key()
+                        .equals(key))
+                .findFirst()
+                .ifPresent(pair -> pair.value(value));
     }
 }
