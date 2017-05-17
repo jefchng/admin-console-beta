@@ -113,8 +113,8 @@ const DiscoveryStageView = ({ messages, testSources, setDefaults, configs, disco
                       username: configs.sourceUserName,
                       password: configs.sourceUserPassword
                     }))
-                    .then(({data}) => { console.log(data); console.log('this thing') }, (a, b, c) => {debugger})
-                    .catch((a, b, c) => {debugger})
+                    .then(({data}) => { /* check for errors */ console.log('data') })
+                    .catch((errors) => {console.log(errors)})
                   : client.query(discoverByURL({
                       url: configs.url,
                       username: configs.username,
