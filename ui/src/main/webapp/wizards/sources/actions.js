@@ -21,6 +21,9 @@ export const setConfigSource = (source) => ({ type: 'SET_CONFIG_SOURCE', value: 
 export const setConfigTypes = (types) => ({ type: 'SOURCES/SET_CONFIG_IDS', types })
 export const setDiscoveryType = (value) => ({ type: 'SOURCES/DISCOVERY_TYPE/SET', value })
 
+export const setDiscoveredEndpoints = (endpointConfigs) => ({ type: 'SOURCES/SET_DISCOVERED_ENDPOINTS', endpointConfigs })
+export const setChosenEndpoint = (endpointKey) => ({ type: 'SOURCES/SET_CHOSEN_ENDPOINT', endpointKey })
+
 export const resetSourceWizardState = () => (dispatch) => {
   dispatch(clearWizard())
   dispatch(clearConfiguration())

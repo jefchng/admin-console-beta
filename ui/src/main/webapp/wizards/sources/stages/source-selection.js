@@ -1,9 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { withApollo } from 'react-apollo'
 
-import { getSourceSelections, getConfigurationHandlerId, getDiscoveryType } from '../reducer'
-import { getMessages } from 'admin-wizard/reducer'
-import { changeStage, testSources } from '../actions'
+import { getDiscoveryType, getDiscoveredEndpoints, getChosenEndpoint } from '../reducer'
+import { getAllConfig, getMessages } from 'admin-wizard/reducer'
+import { changeStage, setDiscoveredEndpoints, setChosenEndpoint } from '../actions'
+import { discoverSources, filterAvailableEndpoints } from '../graphql-queries/source-discovery'
 
 import Title from 'components/Title'
 import Description from 'components/Description'
@@ -13,8 +15,8 @@ import Message from 'components/Message'
 
 import { NavPanes, SourceRadioButtons } from '../components'
 
-const SourceSelectionStageView = ({ messages, sourceSelections = [], selectedSourceConfigHandlerId, changeStage, testSources, discoveryType }) => {
-  if (sourceSelections.length !== 0) {
+const SourceSelectionStageView = ({ messages, changeStage, discoveryType, discoveredEndpoints = {}, configs, client, setDiscoveredEndpoints, chosenEndpoint, setChosenEndpoint }) => {
+  if (Object.keys(discoveredEndpoints).length !== 0) {
     return (
       <NavPanes backClickTarget='discoveryStage' forwardClickTarget='confirmationStage'>
         <Title>
@@ -23,10 +25,10 @@ const SourceSelectionStageView = ({ messages, sourceSelections = [], selectedSou
         <Description>
           Choose which sources to add.
         </Description>
-        <SourceRadioButtons options={sourceSelections} />
+        <SourceRadioButtons options={discoveredEndpoints} valueSelected={chosenEndpoint} onChange={setChosenEndpoint} />
         {messages.map((msg, i) => <Message key={i} {...msg} />)}
         <ActionGroup>
-          <Action primary label='Next' disabled={selectedSourceConfigHandlerId === undefined} onClick={() => changeStage('confirmationStage')} />
+          <Action primary label='Next' disabled={chosenEndpoint === ''} onClick={() => changeStage('confirmationStage')} />
         </ActionGroup>
       </NavPanes>
     )
@@ -41,18 +43,25 @@ const SourceSelectionStageView = ({ messages, sourceSelections = [], selectedSou
         </Description>
         {messages.map((msg, i) => <Message key={i} {...msg} />)}
         <ActionGroup>
-          <Action primary label='Try Again' onClick={() => testSources('sources', 'sourceSelectionStage', 'discoveryStage', discoveryType)} />
+          <Action primary label='Try Again' onClick={() => client.query(discoverSources({ configs, discoveryType }))
+            .then(({data}) => { setDiscoveredEndpoints(filterAvailableEndpoints(data)) })
+            .catch((errors) => console.log(errors))} />
         </ActionGroup>
       </NavPanes>
     )
   }
 }
-export default connect((state) => ({
-  sourceSelections: getSourceSelections(state),
-  selectedSourceConfigHandlerId: getConfigurationHandlerId(state),
+
+let SourceSelectionStage = connect((state) => ({
   messages: getMessages(state, 'sourceSelectionStage'),
-  discoveryType: getDiscoveryType(state)
+  discoveryType: getDiscoveryType(state),
+  discoveredEndpoints: getDiscoveredEndpoints(state),
+  configs: getAllConfig(state),
+  chosenEndpoint: getChosenEndpoint(state)
 }), {
   changeStage,
-  testSources
+  setDiscoveredEndpoints,
+  setChosenEndpoint
 })(SourceSelectionStageView)
+
+export default withApollo(SourceSelectionStage)

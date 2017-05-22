@@ -1,0 +1,1 @@
+export const UNKNOWN_ENDPOINT = 'UNKNOWN_ENDPOINT'

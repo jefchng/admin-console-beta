@@ -1,4 +1,4 @@
-import { gql } from "react-apollo";
+import { gql } from 'react-apollo'
 
 const payloadFragments = {
   cswConfigurationPayload: gql`
@@ -9,7 +9,6 @@ const payloadFragments = {
       cswOutputSchema
       cswSpatialOperator
       pid
-      eventServiceAddress
       creds {
         username
         password
@@ -38,7 +37,7 @@ const payloadFragments = {
         password
       }
     }
-  `,
+  `
 }
 
 const queryFragments = {
@@ -126,4 +125,50 @@ const queries = {
   `
 }
 
-export { queries, queryFragments, payloadFragments}
+const discoverSources = ({ configs, discoveryType }) => {
+  let query = {
+    query: queries.all,
+    variables: {},
+    fetchPolicy: 'network-only'
+  }
+
+  if (discoveryType === 'hostnamePort') {
+    query.variables.address = {
+      host: {
+        hostname: configs.sourceHostName,
+        port: configs.sourcePort
+      }
+    }
+  } else {
+    query.variables.address = {
+      url: configs.url
+    }
+  }
+
+  if (configs.sourceUserName && configs.sourceUserPassword) {
+    query.variables.creds = {
+      username: configs.sourceUserName,
+      password: configs.sourceUserPassword
+    }
+  }
+
+  return query
+}
+
+const filterAvailableEndpoints = (data) => {
+  let clonedData = JSON.parse(JSON.stringify(data)) // deep clone data
+
+  if (clonedData.errors) {
+    clonedData.errors.forEach((error) => {
+      if (error.code === 'UNKNOWN_ENDPOINT' || error.code === 'CANNOT_CONNECT') {
+        delete clonedData[error.path[0]] // remove undiscovered endpoints
+      }
+    })
+    delete clonedData.errors // remove errors key
+  }
+
+  delete clonedData.__typename // remove graphql helper key
+  return clonedData
+}
+
+export { queries, queryFragments, payloadFragments, discoverSources, filterAvailableEndpoints }

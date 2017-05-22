@@ -1,10 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { withApollo } from 'react-apollo'
 
-import { getSourceName } from '../reducer'
-import { getAllConfig, getConfig, getMessages } from 'admin-wizard/reducer'
-import { persistConfig } from '../actions'
+import { getSourceName, getChosenEndpoint, getDiscoveredEndpoints } from '../reducer'
+import { changeStage } from '../actions'
+import { getAllConfig, getMessages } from 'admin-wizard/reducer'
 import { NavPanes } from '../components.js'
+import { saveSource } from '../graphql-mutations/source-persist'
 
 import Info from 'components/Information'
 import Title from 'components/Title'
@@ -17,8 +19,10 @@ import {
   Input
 } from 'admin-wizard/inputs'
 
-const ConfirmationStageView = ({ messages, selectedSource, persistConfig, sourceName, configType }) => (
-  <NavPanes backClickTarget='sourceSelectionStage' forwardClickTarget='completedStage'>
+const ConfirmationStageView = ({ messages, sourceName, client, inputConfigs, config, type, changeStage }) => {
+  const sourceConfig = config[Object.keys(config)[0]].sourceConfig
+
+  return (<NavPanes backClickTarget='sourceSelectionStage' forwardClickTarget='completedStage'>
     <Title>
       Finalize Source Configuration
     </Title>
@@ -27,9 +31,9 @@ const ConfirmationStageView = ({ messages, selectedSource, persistConfig, source
     </Description>
     <div style={{ width: 400, position: 'relative', margin: '0px auto', padding: 0 }}>
       <Input id='sourceName' label='Source Name' autoFocus />
-      <Info label='Source Address' value={selectedSource.endpointUrl} />
-      <Info label='Username' value={selectedSource.sourceUserName || 'none'} />
-      <Info label='Password' value={selectedSource.sourceUserPassword ? '*****' : 'none'} />
+      <Info label='Source Address' value={sourceConfig.endpointUrl} />
+      <Info label='Username' value={inputConfigs.sourceUserName || 'none'} />
+      <Info label='Password' value={inputConfigs.sourceUserPassword ? '*****' : 'none'} />
       {messages.map((msg, i) => <Message key={i} {...msg} />)}
     </div>
     <ActionGroup>
@@ -37,17 +41,22 @@ const ConfirmationStageView = ({ messages, selectedSource, persistConfig, source
         primary
         label='Finish'
         disabled={sourceName === undefined || sourceName.trim() === ''}
-        onClick={() => persistConfig('/admin/beta/config/persist/' + (selectedSource.configurationHandlerId || configType) + '/create', null, 'completedStage', configType, 'confirmationStage')} />
+        onClick={() => client.mutate(saveSource({ type, sourceConfig, sourceName, creds: { username: inputConfigs.sourceUserName, password: inputConfigs.sourceUserPassword } }))
+          .then(() => { changeStage('completedStage') }, () => { console.log('it broke...') })
+          .catch((errors) => console.log(errors))} />
     </ActionGroup>
   </NavPanes>
-)
-export default connect((state) => ({
-  selectedSource: getAllConfig(state),
+  )
+}
+
+let ConfirmationStage = connect((state) => ({
   sourceName: getSourceName(state),
-  configType: (getConfig(state, 'configurationType'))
-    ? getConfig(state, 'configurationType').value
-    : null,
-  messages: getMessages(state, 'confirmationStage')
+  messages: getMessages(state, 'confirmationStage'),
+  inputConfigs: getAllConfig(state),
+  type: getChosenEndpoint(state),
+  config: getDiscoveredEndpoints(state)[getChosenEndpoint(state)]
 }), ({
-  persistConfig
+  changeStage
 }))(ConfirmationStageView)
+
+export default withApollo(ConfirmationStage)

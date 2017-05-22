@@ -56,6 +56,28 @@ const sourceSelections = (state = Map(), { type, sourceConfigs }) => {
   }
 }
 
+const chosenEndpoint = (state = '', { type, endpointKey }) => {
+  switch (type) {
+    case 'SOURCES/SET_CHOSEN_ENDPOINT':
+      return endpointKey
+    case 'CLEAR_WIZARD':
+      return ''
+    default:
+      return state
+  }
+}
+
+const discoveredEndpoints = (state = Map(), { type, endpointConfigs }) => {
+  switch (type) {
+    case 'SOURCES/SET_DISCOVERED_ENDPOINTS':
+      return fromJS(endpointConfigs)
+    case 'CLEAR_WIZARD':
+      return Map()
+    default:
+      return state
+  }
+}
+
 const isSubmitting = (state = false, { type }) => {
   switch (type) {
     case 'START_SUBMITTING':
@@ -137,5 +159,8 @@ export const getConfig = (state, id) => state.getIn(['wizard', 'config', id], Ma
 export const getConfigurationHandlerId = (state) => state.getIn(['wizard', 'config', 'configurationHandlerId'])
 export const getSourceName = (state) => state.getIn(['wizard', 'config', 'sourceName', 'value'])
 
-export default combineReducers({ sourceStage, sourceStagesClean, sourceStageProgress, sourceSelections, isSubmitting, configTypes, discoveryType })
+export const getDiscoveredEndpoints = (state) => submarine(state).get('discoveredEndpoints').toJS()
+export const getChosenEndpoint = (state) => submarine(state).get('chosenEndpoint')
+
+export default combineReducers({ sourceStage, sourceStagesClean, sourceStageProgress, sourceSelections, isSubmitting, configTypes, discoveryType, discoveredEndpoints, chosenEndpoint })
 
