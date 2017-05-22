@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import Mount from 'react-mount'
 import { withApollo } from 'react-apollo'
 import { getDiscoveryType } from '../reducer'
-import { setDiscoveryType, changeStage, setDiscoveredEndpoints } from '../actions'
+import { setDiscoveryType, changeStage, setDiscoveredEndpoints, startSubmitting, endSubmitting } from '../actions'
 import { NavPanes, SideLines } from '../components'
 import { setDefaults } from '../../../actions'
 import { discoverSources, filterAvailableEndpoints } from '../graphql-queries/source-discovery'
@@ -29,7 +29,7 @@ const discoveryStageDefaults = {
   sourcePort: 8993
 }
 
-const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, setDiscoveryType, changeStage, client, setDiscoveredEndpoints }) => {
+const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, setDiscoveryType, changeStage, client, setDiscoveredEndpoints, startSubmitting, endSubmitting }) => {
   const nextShouldBeDisabled = () => {
     // checks that username & password are either both filled out or both empty (because it's optional)
     if (isBlank(configs.sourceUserName) !== isEmpty(configs.sourceUserPassword)) {
@@ -105,9 +105,20 @@ const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, set
               primary
               label='Check'
               disabled={nextShouldBeDisabled()}
-              onClick={() => client.query(discoverSources({ configs, discoveryType }))
-                    .then(({data}) => { setDiscoveredEndpoints(filterAvailableEndpoints(data)); changeStage('sourceSelectionStage') })
-                    .catch((errors) => console.log(errors))} />
+              onClick={() => {
+                startSubmitting()
+                client.query(discoverSources({ configs, discoveryType }))
+                  .then(({data}) => {
+                    setDiscoveredEndpoints(filterAvailableEndpoints(data))
+                    endSubmitting()
+                    changeStage('sourceSelectionStage')
+                  })
+                  .catch((errors) => {
+                    endSubmitting()
+                    console.log(errors)
+                  })
+              }
+              } />
           </ActionGroup>
         </div>
       </NavPanes>
@@ -123,7 +134,9 @@ let DiscoveryStage = connect((state) => ({
   setDefaults,
   setDiscoveryType,
   changeStage,
-  setDiscoveredEndpoints
+  setDiscoveredEndpoints,
+  startSubmitting,
+  endSubmitting
 })(DiscoveryStageView)
 
 export default withApollo(DiscoveryStage)

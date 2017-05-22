@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { withApollo } from 'react-apollo'
 
 import { getSourceName, getChosenEndpoint, getDiscoveredEndpoints } from '../reducer'
-import { changeStage } from '../actions'
+import { changeStage, startSubmitting, endSubmitting } from '../actions'
 import { getAllConfig, getMessages } from 'admin-wizard/reducer'
 import { NavPanes } from '../components.js'
 import { saveSource } from '../graphql-mutations/source-persist'
@@ -19,7 +19,7 @@ import {
   Input
 } from 'admin-wizard/inputs'
 
-const ConfirmationStageView = ({ messages, sourceName, client, inputConfigs, config, type, changeStage }) => {
+const ConfirmationStageView = ({ messages, sourceName, client, inputConfigs, config, type, changeStage, startSubmitting, endSubmitting }) => {
   const sourceConfig = config[Object.keys(config)[0]].sourceConfig
 
   return (<NavPanes backClickTarget='sourceSelectionStage' forwardClickTarget='completedStage'>
@@ -41,9 +41,18 @@ const ConfirmationStageView = ({ messages, sourceName, client, inputConfigs, con
         primary
         label='Finish'
         disabled={sourceName === undefined || sourceName.trim() === ''}
-        onClick={() => client.mutate(saveSource({ type, sourceConfig, sourceName, creds: { username: inputConfigs.sourceUserName, password: inputConfigs.sourceUserPassword } }))
-          .then(() => { changeStage('completedStage') }, () => { console.log('it broke...') })
-          .catch((errors) => console.log(errors))} />
+        onClick={() => {
+          startSubmitting()
+          client.mutate(saveSource({ type, sourceConfig, sourceName, creds: { username: inputConfigs.sourceUserName, password: inputConfigs.sourceUserPassword } }))
+          .then(() => {
+            endSubmitting()
+            changeStage('completedStage')
+          })
+          .catch((errors) => {
+            endSubmitting()
+            console.log(errors)
+          })
+        }} />
     </ActionGroup>
   </NavPanes>
   )
@@ -56,7 +65,9 @@ let ConfirmationStage = connect((state) => ({
   type: getChosenEndpoint(state),
   config: getDiscoveredEndpoints(state)[getChosenEndpoint(state)]
 }), ({
-  changeStage
+  changeStage,
+  startSubmitting,
+  endSubmitting
 }))(ConfirmationStageView)
 
 export default withApollo(ConfirmationStage)
