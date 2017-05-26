@@ -1,5 +1,7 @@
 import { gql } from 'react-apollo'
 
+import { errorCode } from 'graphql-errors'
+
 const payloadFragments = {
   cswConfigurationPayload: gql`
     fragment cswSourceConfigurationPayload on CswSourceConfigurationPayload {
@@ -141,7 +143,7 @@ const discoverSources = ({ configs, discoveryType }) => {
     }
   } else {
     query.variables.address = {
-      url: configs.url
+      url: configs.endpointUrl
     }
   }
 
@@ -155,20 +157,41 @@ const discoverSources = ({ configs, discoveryType }) => {
   return query
 }
 
-const filterAvailableEndpoints = (data) => {
-  let clonedData = JSON.parse(JSON.stringify(data)) // deep clone data
-
-  if (clonedData.errors) {
-    clonedData.errors.forEach((error) => {
-      if (error.code === 'UNKNOWN_ENDPOINT' || error.code === 'CANNOT_CONNECT') {
-        delete clonedData[error.path[0]] // remove undiscovered endpoints
-      }
-    })
-    delete clonedData.errors // remove errors key
+// formats the graphql response in a wizard-friendly way. Update this if the graphql requests
+// or api ever change
+const formatResults = (response) => {
+  var results = {
+    configs: {},
+    errors: []
   }
 
-  delete clonedData.__typename // remove graphql helper key
-  return clonedData
+  // CSW flattening
+  if (response.data.csw.discoverCsw) {
+    results.csw = response.data.csw.discoverCsw.sourceConfig
+  }
+
+  // WFS flattening
+  if (response.data.wfs.discoverWfs) {
+    results.wfs = response.data.wfs.discoverWfs.sourceConfig
+  }
+
+  // OpenSearch flattening
+  if (response.data.openSearch.discoverOpenSearch) {
+    results.openSearch = response.data.openSearch.discoverOpenSearch.sourceConfig
+  }
+
+  // TODO: Change this once error reporting is updated. Removing these errors as they do not
+  //       necessarily mean anything went wrong during hostname & port source discovery.
+  //       Also deduping identical errors to make displaying errors cleaner
+  response.data.errors.forEach((error) => {
+    if (error.code !== errorCode.CANNOT_CONNECT && error.code !== errorCode.UNKNOWN_ENDPOINT){
+      if (!results.errors.includes(error.code)) {
+        results.errors.push(error.code)
+      }
+    }
+  })
+
+  return results
 }
 
-export { queries, queryFragments, payloadFragments, discoverSources, filterAvailableEndpoints }
+export { queries, queryFragments, payloadFragments, discoverSources, formatResults }

@@ -45,17 +45,6 @@ const sourceStageProgress = (state = 'welcomeStage', { type, stage }) => {
   }
 }
 
-const sourceSelections = (state = Map(), { type, sourceConfigs }) => {
-  switch (type) {
-    case 'SET_SOURCE_SELECTIONS':
-      return sourceConfigs
-    case 'CLEAR_WIZARD':
-      return Map()
-    default :
-      return state
-  }
-}
-
 const chosenEndpoint = (state = '', { type, endpointKey }) => {
   switch (type) {
     case 'SOURCES/SET_CHOSEN_ENDPOINT':
@@ -75,6 +64,21 @@ const discoveredEndpoints = (state = Map(), { type, endpointConfigs }) => {
       return Map()
     default:
       return state
+  }
+}
+
+const errors = (state = Map(), { type, stageId, errorList, error }) => {
+  switch (type) {
+    case 'SOURCES/SET_ERRORS':
+      return state.set(stageId, errorList)
+    case 'SOURCES/ADD_ERROR':
+      return state.set(stageId, state.get(stageId).push(error))
+    case 'SOURCES/CLEAR_ERRORS':
+    case 'CLEAR_WIZARD':
+      return Map()
+    default:
+      return state
+
   }
 }
 
@@ -147,13 +151,13 @@ export const getDiscoveryConfigs = (state) => (type) => {
 }
 
 export const submarine = sub()
-export const getSourceSelections = (state) => submarine(state).get('sourceSelections')
 export const getIsSubmitting = (state) => submarine(state).get('isSubmitting')
 export const getDiscoveryType = (state) => submarine(state).get('discoveryType')
 export const getSourceStage = (state) => submarine(state).get('sourceStage')
 export const getStageProgress = (state) => submarine(state).get('sourceStageProgress')
 export const getStagesClean = (state) => submarine(state).get('sourceStagesClean')
 export const getConfigTypes = (state) => submarine(state).get('configTypes').toJS()
+export const getErrors = (state) => (stageId) => submarine(state).getIn(['errors', stageId], [])
 
 export const getConfig = (state, id) => state.getIn(['wizard', 'config', id], Map()).toJS()
 export const getConfigurationHandlerId = (state) => state.getIn(['wizard', 'config', 'configurationHandlerId'])
@@ -162,5 +166,5 @@ export const getSourceName = (state) => state.getIn(['wizard', 'config', 'source
 export const getDiscoveredEndpoints = (state) => submarine(state).get('discoveredEndpoints').toJS()
 export const getChosenEndpoint = (state) => submarine(state).get('chosenEndpoint')
 
-export default combineReducers({ sourceStage, sourceStagesClean, sourceStageProgress, sourceSelections, isSubmitting, configTypes, discoveryType, discoveredEndpoints, chosenEndpoint })
+export default combineReducers({ sourceStage, sourceStagesClean, sourceStageProgress, isSubmitting, configTypes, discoveryType, discoveredEndpoints, chosenEndpoint, errors })
 

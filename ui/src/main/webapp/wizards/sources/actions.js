@@ -11,18 +11,21 @@ export const stagesModified = () => ({type: 'SOURCE_MODIFIED_STAGES'})
 export const setStageProgress = (stageId) => ({type: 'SET_CURRENT_PROGRESS', stage: stageId})
 export const setNavStage = (stageId) => ({type: 'SOURCE_NAV_STAGE', stage: stageId})
 export const setSourceSelections = (selections) => ({type: 'SET_SOURCE_SELECTIONS', sourceConfigs: selections})
-export const setSelectedSource = (source) => ({type: 'SET_SELECTED_SOURCE', selectedSource: source})
 export const clearConfiguration = () => ({type: 'CLEAR_CONFIG'})
 export const setMessages = (id, messages) => ({ type: 'SET_MESSAGES', id, messages })
 export const clearMessages = (id) => ({ type: 'CLEAR_MESSAGES', id })
 export const startSubmitting = () => ({ type: 'START_SUBMITTING' })
 export const endSubmitting = () => ({ type: 'END_SUBMITTING' })
-export const setConfigSource = (source) => ({ type: 'SET_CONFIG_SOURCE', value: source })
 export const setConfigTypes = (types) => ({ type: 'SOURCES/SET_CONFIG_IDS', types })
 export const setDiscoveryType = (value) => ({ type: 'SOURCES/DISCOVERY_TYPE/SET', value })
 
 export const setDiscoveredEndpoints = (endpointConfigs) => ({ type: 'SOURCES/SET_DISCOVERED_ENDPOINTS', endpointConfigs })
 export const setChosenEndpoint = (endpointKey) => ({ type: 'SOURCES/SET_CHOSEN_ENDPOINT', endpointKey })
+
+export const setErrors = (stageId, errorList) => ({ type: 'SOURCES/SET_ERRORS', stageId, errorList })
+export const addError = (stageId, error) => ({ type: 'SOURCES/ADD_ERROR', stageId, error })
+export const clearErrors = () => ({ type: 'SOURCES/CLEAR_ERRORS' })
+
 
 export const resetSourceWizardState = () => (dispatch) => {
   dispatch(clearWizard())

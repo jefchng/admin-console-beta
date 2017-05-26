@@ -2,19 +2,25 @@ import React from 'react'
 import { connect } from 'react-redux'
 import Mount from 'react-mount'
 import { withApollo } from 'react-apollo'
-import { getDiscoveryType } from '../reducer'
-import { setDiscoveryType, changeStage, setDiscoveredEndpoints, startSubmitting, endSubmitting } from '../actions'
+
+import { getDiscoveryType, getErrors } from '../reducer'
+import { setDiscoveryType, changeStage, setDiscoveredEndpoints, startSubmitting, endSubmitting, setErrors, clearErrors } from '../actions'
 import { NavPanes, SideLines } from '../components'
 import { setDefaults } from '../../../actions'
-import { discoverSources, filterAvailableEndpoints } from '../graphql-queries/source-discovery'
+import { discoverSources, formatResults } from '../graphql-queries/source-discovery'
+
 import Title from 'components/Title'
 import Description from 'components/Description'
 import ActionGroup from 'components/ActionGroup'
 import Action from 'components/Action'
 import Message from 'components/Message'
-import {getAllConfig, getMessages} from 'admin-wizard/reducer'
-import {Input, Password, Hostname, Port} from 'admin-wizard/inputs'
+import { getAllConfig } from 'admin-wizard/reducer'
+import { Input, Password, Hostname, Port } from 'admin-wizard/inputs'
+import { errorCode, friendlyMessage } from 'graphql-errors'
+
 import FlatButton from 'material-ui/FlatButton'
+
+const currentStageId = 'discoveryStage'
 
 const isEmpty = (string) => {
   return !string
@@ -29,7 +35,7 @@ const discoveryStageDefaults = {
   sourcePort: 8993
 }
 
-const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, setDiscoveryType, changeStage, client, setDiscoveredEndpoints, startSubmitting, endSubmitting }) => {
+const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, setDiscoveryType, changeStage, client, setDiscoveredEndpoints, startSubmitting, endSubmitting, setErrors, clearErrors }) => {
   const nextShouldBeDisabled = () => {
     // checks that username & password are either both filled out or both empty (because it's optional)
     if (isBlank(configs.sourceUserName) !== isEmpty(configs.sourceUserPassword)) {
@@ -99,7 +105,7 @@ const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, set
             id='sourceUserPassword'
             label='Password'
             errorText={(!isBlank(configs.sourceUserName) && isEmpty(configs.sourceUserPassword)) ? 'Username with no password.' : undefined} />
-          {messages.map((msg, i) => <Message key={i} {...msg} />)}
+          {messages.map((msg, i) => <Message key={i} message={msg} type='FAILURE' />)}
           <ActionGroup>
             <Action
               primary
@@ -108,17 +114,24 @@ const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, set
               onClick={() => {
                 startSubmitting()
                 client.query(discoverSources({ configs, discoveryType }))
-                  .then(({data}) => {
-                    setDiscoveredEndpoints(filterAvailableEndpoints(data))
+                  .then((response) => {
                     endSubmitting()
-                    changeStage('sourceSelectionStage')
+                    const results = formatResults(response)
+                    if(results.errors.length > 0){
+                      setErrors(currentStageId, results.errors.map((code) => friendlyMessage[code]))
+                    } else {
+                      clearErrors()
+                      setDiscoveredEndpoints(results.configs)
+                      endSubmitting()
+                      changeStage('sourceSelectionStage')
+                    }
                   })
-                  .catch((errors) => {
+                  .catch((e) => {
+                  console.log(e)
                     endSubmitting()
-                    console.log(errors)
+                    setErrors(currentStageId, ['Network Error'])
                   })
-              }
-              } />
+              }} />
           </ActionGroup>
         </div>
       </NavPanes>
@@ -128,15 +141,17 @@ const DiscoveryStageView = ({ messages, setDefaults, configs, discoveryType, set
 
 let DiscoveryStage = connect((state) => ({
   configs: getAllConfig(state),
-  messages: getMessages(state, 'discoveryStage'),
-  discoveryType: getDiscoveryType(state)
+  messages: getErrors(state)(currentStageId),
+  discoveryType: getDiscoveryType(state),
 }), {
   setDefaults,
   setDiscoveryType,
   changeStage,
   setDiscoveredEndpoints,
   startSubmitting,
-  endSubmitting
+  endSubmitting,
+  setErrors,
+  clearErrors
 })(DiscoveryStageView)
 
 export default withApollo(DiscoveryStage)

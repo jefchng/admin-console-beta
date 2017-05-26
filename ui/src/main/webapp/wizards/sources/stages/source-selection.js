@@ -4,8 +4,10 @@ import { withApollo } from 'react-apollo'
 
 import { getDiscoveryType, getDiscoveredEndpoints, getChosenEndpoint } from '../reducer'
 import { getAllConfig, getMessages } from 'admin-wizard/reducer'
-import { changeStage, setDiscoveredEndpoints, setChosenEndpoint, startSubmitting, endSubmitting } from '../actions'
-import { discoverSources, filterAvailableEndpoints } from '../graphql-queries/source-discovery'
+import { friendlyMessage } from 'graphql-errors'
+
+import { changeStage, setDiscoveredEndpoints, setChosenEndpoint, startSubmitting, endSubmitting, setErrors, clearErrors } from '../actions'
+import { discoverSources, formatResults } from '../graphql-queries/source-discovery'
 
 import Title from 'components/Title'
 import Description from 'components/Description'
@@ -15,7 +17,9 @@ import Message from 'components/Message'
 
 import { NavPanes, SourceRadioButtons } from '../components'
 
-const SourceSelectionStageView = ({ messages, changeStage, discoveryType, discoveredEndpoints = {}, configs, client, setDiscoveredEndpoints, chosenEndpoint, setChosenEndpoint, startSubmitting, endSubmitting }) => {
+const currentStageId = 'sourceSelectionStage'
+
+const SourceSelectionStageView = ({ messages, changeStage, discoveryType, discoveredEndpoints = {}, configs, client, setDiscoveredEndpoints, chosenEndpoint, setChosenEndpoint, startSubmitting, endSubmitting, setErrors, clearErrors }) => {
   if (Object.keys(discoveredEndpoints).length !== 0) {
     return (
       <NavPanes backClickTarget='discoveryStage' forwardClickTarget='confirmationStage'>
@@ -26,7 +30,7 @@ const SourceSelectionStageView = ({ messages, changeStage, discoveryType, discov
           Choose which sources to add.
         </Description>
         <SourceRadioButtons options={discoveredEndpoints} valueSelected={chosenEndpoint} onChange={setChosenEndpoint} />
-        {messages.map((msg, i) => <Message key={i} {...msg} />)}
+        {messages.map((msg, i) => <Message key={i} message={msg} type='FAILURE' />)}
         <ActionGroup>
           <Action primary label='Next' disabled={chosenEndpoint === ''} onClick={() => changeStage('confirmationStage')} />
         </ActionGroup>
@@ -46,13 +50,20 @@ const SourceSelectionStageView = ({ messages, changeStage, discoveryType, discov
           <Action primary label='Try Again' onClick={() => {
             startSubmitting()
             client.query(discoverSources({ configs, discoveryType }))
-              .then(({data}) => {
+              .then((data) => {
                 endSubmitting()
-                setDiscoveredEndpoints(filterAvailableEndpoints(data))
+                const results = formatResults(data)
+                if(results.errors.length > 0){
+                  setErrors(currentStageId, results.errors.map((code) => friendlyMessage[code]))
+                } else {
+                  clearErrors()
+                  setDiscoveredEndpoints(results.configs)
+                  endSubmitting()
+                }
               })
-              .catch((errors) => {
+              .catch(() => {
                 endSubmitting()
-                console.log(errors)
+                setErrors(currentStageId, ['Network Error'])
               })
           }
           } />
@@ -73,7 +84,9 @@ let SourceSelectionStage = connect((state) => ({
   setDiscoveredEndpoints,
   setChosenEndpoint,
   startSubmitting,
-  endSubmitting
+  endSubmitting,
+  setErrors,
+  clearErrors
 })(SourceSelectionStageView)
 
 export default withApollo(SourceSelectionStage)
