@@ -14,7 +14,8 @@
 package org.codice.ddf.admin.ldap.persist;
 
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.failedPersistError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.noExistingConfigError;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.ATTRIBUTE_STORE;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION_AND_ATTRIBUTE_STORE;
@@ -33,6 +34,7 @@ import org.codice.ddf.admin.common.fields.base.ListFieldImpl;
 import org.codice.ddf.admin.configurator.Configurator;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.configurator.OperationReport;
+import org.codice.ddf.admin.ldap.commons.LdapTestingUtils;
 import org.codice.ddf.admin.ldap.commons.services.LdapServiceCommons;
 import org.codice.ddf.admin.ldap.fields.config.LdapConfigurationField;
 import org.codice.ddf.admin.security.common.services.LdapClaimsHandlerServiceProperties;
@@ -104,7 +106,7 @@ public class SaveLdapConfiguration extends BaseFunctionField<ListField<LdapConfi
                 config.toString());
 
         if(report.containsFailedResults()) {
-            addResultMessage(internalError());
+            addResultMessage(failedPersistError());
         }
 
         return serviceCommons.getLdapConfigurations(configuratorFactory);
@@ -118,9 +120,9 @@ public class SaveLdapConfiguration extends BaseFunctionField<ListField<LdapConfi
         }
 
         if (config.pid() != null && !testingUtils.serviceExists(config.pid(), configuratorFactory.getConfigReader())) {
-            addArgumentMessage(serviceDoesNotExistError(null));
+            addArgumentMessage(noExistingConfigError());
         } else {
-            addMessages(testingUtils.ldapConnectionExists(config, configuratorFactory));
+            addResultMessages(testingUtils.ldapConnectionExists(config, configuratorFactory));
         }
     }
 

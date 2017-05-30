@@ -16,21 +16,22 @@ package org.codice.ddf.admin.ldap;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codice.ddf.admin.api.action.Action;
-import org.codice.ddf.admin.common.actions.BaseActionCreator;
+import org.codice.ddf.admin.api.Field;
+import org.codice.ddf.admin.api.fields.FunctionField;
+import org.codice.ddf.admin.common.fields.base.function.BaseFieldProvider;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
 import org.codice.ddf.admin.ldap.discover.LdapConfigurations;
-import org.codice.ddf.admin.ldap.discover.LdapRecommendedSettings;
-import org.codice.ddf.admin.ldap.discover.LdapUserAttributes;
 import org.codice.ddf.admin.ldap.discover.LdapQuery;
+import org.codice.ddf.admin.ldap.discover.LdapRecommendedSettings;
 import org.codice.ddf.admin.ldap.discover.LdapTestBind;
 import org.codice.ddf.admin.ldap.discover.LdapTestConnection;
 import org.codice.ddf.admin.ldap.discover.LdapTestSettings;
+import org.codice.ddf.admin.ldap.discover.LdapUserAttributes;
 import org.codice.ddf.admin.ldap.embedded.InstallEmbeddedLdap;
 import org.codice.ddf.admin.ldap.persist.DeleteLdapConfiguration;
 import org.codice.ddf.admin.ldap.persist.SaveLdapConfiguration;
 
-public class LdapFieldProvider extends BaseActionCreator {
+public class LdapFieldProvider extends BaseFieldProvider {
 
     public static final String NAME = "ldap";
 
@@ -46,7 +47,7 @@ public class LdapFieldProvider extends BaseActionCreator {
     }
 
     @Override
-    public List<Action> getDiscoveryActions() {
+    public List<Field> getDiscoveryFields() {
         return Arrays.asList(new LdapRecommendedSettings(),
                 new LdapTestConnection(),
                 new LdapTestBind(),
@@ -57,7 +58,7 @@ public class LdapFieldProvider extends BaseActionCreator {
     }
 
     @Override
-    public List<Action> getPersistActions() {
+    public List<FunctionField> getMutationFunctions() {
         return Arrays.asList(new SaveLdapConfiguration(configuratorFactory),
                 new DeleteLdapConfiguration(configuratorFactory),
                 new InstallEmbeddedLdap(configuratorFactory));

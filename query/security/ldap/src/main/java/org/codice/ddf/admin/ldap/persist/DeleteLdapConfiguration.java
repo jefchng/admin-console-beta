@@ -13,7 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.persist;
 
-import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.failedDeleteError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.noExistingConfigError;
 
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class DeleteLdapConfiguration extends BaseFunctionField<ListField<LdapCon
                         pid.getValue());
 
         if(report.containsFailedResults()) {
-            addMessage(internalError());
+            addResultMessage(failedDeleteError());
         }
 
         return serviceCommons.getLdapConfigurations(configuratorFactory);
@@ -81,7 +82,7 @@ public class DeleteLdapConfiguration extends BaseFunctionField<ListField<LdapCon
         }
 
         if (!testingUtils.serviceExists(pid.getValue(), configuratorFactory.getConfigReader())) {
-            addArgumentMessage(LdapMessages.serviceDoesNotExistError(pid.path()));
+            addArgumentMessage(noExistingConfigError(pid.path()));
         }
     }
 

@@ -13,14 +13,13 @@
  **/
 package org.codice.ddf.admin.ldap.discover
 
-import org.codice.ddf.admin.api.action.ActionReport
-import org.codice.ddf.admin.common.actions.BaseAction
+import org.codice.ddf.admin.api.fields.FunctionField
+import org.codice.ddf.admin.api.report.FunctionReport
 import org.codice.ddf.admin.common.fields.common.HostnameField
 import org.codice.ddf.admin.common.fields.common.PortField
 import org.codice.ddf.admin.common.report.message.DefaultMessages
 import org.codice.ddf.admin.ldap.LdapTestingCommons
 import org.codice.ddf.admin.ldap.TestLdapServer
-import org.codice.ddf.admin.ldap.commons.LdapMessages
 import org.codice.ddf.admin.ldap.commons.LdapTestingUtils
 import org.codice.ddf.admin.ldap.fields.connection.LdapConnectionField
 import org.codice.ddf.admin.ldap.fields.connection.LdapEncryptionMethodField
@@ -37,7 +36,7 @@ import static org.junit.Assert.fail
 class TestLdapConnectionTest extends Specification {
     static TestLdapServer server
     Map<String, Object> args
-    LdapTestConnection action
+    LdapTestConnection ldapConnectFunction
 
     def setupSpec() {
         server = TestLdapServer.getInstance()
@@ -51,22 +50,22 @@ class TestLdapConnectionTest extends Specification {
 
     def setup() {
         LdapTestingCommons.loadLdapTestProperties()
-        action = new LdapTestConnection()
+        ldapConnectFunction = new LdapTestConnection()
     }
 
     def 'Fail on missing required connection info fields'() {
         setup:
-        def baseMsg = [LdapTestConnection.ID, BaseAction.ARGUMENT]
+        def baseMsg = [LdapTestConnection.ID, FunctionField.ARGUMENT]
         def missingHostMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, HostnameField.DEFAULT_FIELD_NAME]
         def missingPortMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, PortField.DEFAULT_FIELD_NAME]
         def missingEncryptMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, LdapEncryptionMethodField.DEFAULT_FIELD_NAME]
 
-        action = new LdapTestConnection()
+        ldapConnectFunction = new LdapTestConnection()
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): new LdapConnectionField().getValue()]
-        action.setArguments(args)
+        ldapConnectFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().size() == 3
@@ -81,10 +80,10 @@ class TestLdapConnectionTest extends Specification {
     def 'Successfully connect without encryption'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): noEncryptionLdapConnectionInfo().getValue()]
-        action.setArguments(args)
+        ldapConnectFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().empty
@@ -94,11 +93,11 @@ class TestLdapConnectionTest extends Specification {
     def 'Successfully connect using LDAPS protocol'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): ldapsLdapConnectionInfo().getValue()]
-        action.setArguments(args)
-        action.setTestingUtils(new LdapTestingUtilsMock())
+        ldapConnectFunction.setValue(args)
+        ldapConnectFunction.setTestingUtils(new LdapTestingUtilsMock())
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().empty
@@ -108,10 +107,10 @@ class TestLdapConnectionTest extends Specification {
     def 'Successfully connect using startTls on insecure port (Should not upgrade)'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): startTlsLdapConnectionInfo(server.getLdapPort()).getValue()]
-        action.setArguments(args)
+        ldapConnectFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         // TODO: tbatie - 5/4/17 - need to figure out a way to check if the connection was successfully upgraded to TLS or has no encryption. This information should be relayed back to the user as a warning.
@@ -126,11 +125,11 @@ class TestLdapConnectionTest extends Specification {
     def 'Successfully connect using startTls on LDAPS port (Should upgrade)'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): startTlsLdapConnectionInfo(server.getLdapSecurePort()).getValue()]
-        action.setArguments(args)
-        action.setTestingUtils(new LdapTestingUtilsMock())
+        ldapConnectFunction.setValue(args)
+        ldapConnectFunction.setTestingUtils(new LdapTestingUtilsMock())
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().isEmpty()
@@ -140,46 +139,46 @@ class TestLdapConnectionTest extends Specification {
     def 'Fail to connect to LDAP (Bad hostname)'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): ldapsLdapConnectionInfo().hostname("badHostname").getValue()]
-        action.setArguments(args)
+        ldapConnectFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().size() == 1
         !report.result().getValue()
-        report.messages().get(0).getCode() == LdapMessages.CANNOT_CONNECT
-        report.messages().get(0).getPath() == [LdapTestConnection.ID, BaseAction.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
+        report.messages().get(0).getCode() == DefaultMessages.CANNOT_CONNECT
+        report.messages().get(0).getPath() == [LdapTestConnection.ID, FunctionField.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
     }
 
     def 'Fail to connect to LDAP (Bad port)'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): ldapsLdapConnectionInfo().port(666).getValue()]
-        action.setArguments(args)
+        ldapConnectFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().size() == 1
         !report.result().getValue()
-        report.messages().get(0).getCode() == LdapMessages.CANNOT_CONNECT
-        report.messages().get(0).getPath() == [LdapTestConnection.ID, BaseAction.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
+        report.messages().get(0).getCode() == DefaultMessages.CANNOT_CONNECT
+        report.messages().get(0).getPath() == [LdapTestConnection.ID, FunctionField.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
     }
 
-    def 'Fail from internal error'() {
+    def 'Fail to setup connection test'() {
         setup:
         args = [(LdapConnectionField.DEFAULT_FIELD_NAME): ldapsLdapConnectionInfo().getValue()]
-        action.setArguments(args)
-        action.setTestingUtils(new LdapTestingUtilsMock(true))
+        ldapConnectFunction.setValue(args)
+        ldapConnectFunction.setTestingUtils(new LdapTestingUtilsMock(true))
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapConnectFunction.getValue()
 
         then:
         report.messages().size() == 1
         !report.result().getValue()
-        report.messages().get(0).getCode() == DefaultMessages.INTERNAL_ERROR
+        report.messages().get(0).getCode() == DefaultMessages.FAILED_TEST_SETUP
         report.messages().get(0).getPath() == [LdapTestConnection.ID]
     }
 

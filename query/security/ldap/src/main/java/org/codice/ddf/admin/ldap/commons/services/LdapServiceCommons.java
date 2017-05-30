@@ -51,7 +51,7 @@ public class LdapServiceCommons {
     }
 
     public ListField<LdapConfigurationField> getLdapConfigurations(ConfiguratorFactory configuratorFactory) {
-        List<LdapConfigurationField> ldapLoginConfigs = new LdapClaimsHandlerServiceProperties(configuratorFactory).getLdapClaimsHandlerManagedServices()
+        List<LdapConfigurationField> ldapLoginConfigs = new LdapLoginServiceProperties(configuratorFactory).getLdapLoginManagedServices()
                 .values()
                 .stream()
                 .map(this::ldapLoginServiceToLdapConfiguration)

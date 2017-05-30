@@ -13,7 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.commons;
 
-import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.cannotConnectError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.failedTestSetup;
 import static org.codice.ddf.admin.ldap.fields.connection.LdapBindMethod.DIGEST_MD5_SASL;
 import static org.codice.ddf.admin.ldap.fields.connection.LdapBindMethod.SIMPLE;
 import static org.codice.ddf.admin.ldap.fields.connection.LdapEncryptionMethodField.LDAPS;
@@ -79,7 +80,7 @@ public class LdapTestingUtils {
 
         } catch (Exception e) {
             LOGGER.debug("Error prepping LDAP connection", e);
-            return new LdapConnectionAttempt().addMessage(internalError());
+            return new LdapConnectionAttempt().addMessage(failedTestSetup());
         }
 
         Connection ldapConnection;
@@ -91,7 +92,7 @@ public class LdapTestingUtils {
             LOGGER.debug("Error opening LDAP connection to [{}:{}]",
                     connection.hostname(),
                     connection.port());
-            return new LdapConnectionAttempt().addArgumentMessage(LdapMessages.cannotConnectError(connection.path()));
+            return new LdapConnectionAttempt().addArgumentMessage(cannotConnectError(connection.path()));
         }
 
         return new LdapConnectionAttempt(ldapConnection);

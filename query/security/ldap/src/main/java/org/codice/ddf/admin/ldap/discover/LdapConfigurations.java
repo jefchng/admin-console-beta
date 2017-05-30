@@ -13,6 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.discover;
 
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.noExistingConfigError;
+
 import java.util.List;
 
 import org.codice.ddf.admin.api.DataType;
@@ -22,8 +24,8 @@ import org.codice.ddf.admin.common.fields.base.BaseFunctionField;
 import org.codice.ddf.admin.common.fields.base.ListFieldImpl;
 import org.codice.ddf.admin.common.fields.common.PidField;
 import org.codice.ddf.admin.configurator.ConfiguratorFactory;
-import org.codice.ddf.admin.ldap.commons.services.LdapServiceCommons;
 import org.codice.ddf.admin.ldap.commons.LdapTestingUtils;
+import org.codice.ddf.admin.ldap.commons.services.LdapServiceCommons;
 import org.codice.ddf.admin.ldap.fields.config.LdapConfigurationField;
 
 import com.google.common.collect.ImmutableList;
@@ -70,7 +72,7 @@ public class LdapConfigurations extends BaseFunctionField<ListField<LdapConfigur
         }
 
         if (pid.getValue() != null && !testingUtils.serviceExists(pid.getValue(), configuratorFactory.getConfigReader())) {
-            addArgumentMessage(serviceDoesNotExistError(pid.path()));
+            addArgumentMessage(noExistingConfigError(pid.path()));
         }
     }
 

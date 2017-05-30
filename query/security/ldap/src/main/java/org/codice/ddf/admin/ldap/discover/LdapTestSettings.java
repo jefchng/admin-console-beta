@@ -13,13 +13,12 @@
  **/
 package org.codice.ddf.admin.ldap.discover;
 
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.BASE_GROUP_DN_NOT_FOUND;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.BASE_USER_DN_NOT_FOUND;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.NO_GROUPS_IN_BASE_GROUP_DN;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.NO_GROUPS_WITH_MEMBERS;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.NO_REFERENCED_MEMBER;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.NO_USERS_IN_BASE_USER_DN;
-import static org.codice.ddf.admin.ldap.commons.LdapMessages.USER_NAME_ATTRIBUTE_NOT_FOUND;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.dnDoesNotExistError;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.noGroupsInBaseGroupDnError;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.noGroupsWithMembersWarning;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.noReferencedMemberWarning;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.noUsersInBaseUserDnError;
+import static org.codice.ddf.admin.ldap.commons.LdapMessages.userNameAttributeNotFoundWarning;
 
 import java.util.ArrayList;
 import java.util.Arrays;

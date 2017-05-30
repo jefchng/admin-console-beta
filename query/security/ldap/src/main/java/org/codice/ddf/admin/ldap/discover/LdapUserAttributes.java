@@ -67,7 +67,7 @@ public class LdapUserAttributes extends BaseFunctionField<ListField<StringField>
     public ListField<StringField> performFunction() {
 
         LdapConnectionAttempt ldapConnectionAttempt = utils.bindUserToLdapConnection(config.connectionField(), config.bindUserInfoField());
-        addMessages(ldapConnectionAttempt.messages());
+        addResultMessages(ldapConnectionAttempt.messages());
         addArgumentMessages(ldapConnectionAttempt.argumentMessages());
 
         if (!ldapConnectionAttempt.connection().isPresent()) {

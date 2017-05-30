@@ -13,8 +13,8 @@
  **/
 package org.codice.ddf.admin.ldap.discover
 
-import org.codice.ddf.admin.api.action.ActionReport
-import org.codice.ddf.admin.common.actions.BaseAction
+import org.codice.ddf.admin.api.report.FunctionReport
+import org.codice.ddf.admin.common.fields.base.BaseFunctionField
 import org.codice.ddf.admin.common.fields.common.CredentialsField
 import org.codice.ddf.admin.common.fields.common.HostnameField
 import org.codice.ddf.admin.common.fields.common.PortField
@@ -33,7 +33,7 @@ import spock.lang.Specification
 class PerformLdapQueryTest extends Specification {
     static TestLdapServer server
     Map<String, Object> args
-    LdapQuery action
+    LdapQuery ldapQueryFunction
 
     def setupSpec() {
         server = TestLdapServer.getInstance().useSimpleAuth()
@@ -47,23 +47,23 @@ class PerformLdapQueryTest extends Specification {
 
     def setup() {
         LdapTestingCommons.loadLdapTestProperties()
-        action = new LdapQuery()
+        ldapQueryFunction = new LdapQuery()
     }
 
     def 'Fail on missing required fields'() {
         setup:
-        def baseMsg = [LdapQuery.ID, BaseAction.ARGUMENT]
+        def baseMsg = [LdapQuery.ID, BaseFunctionField.ARGUMENT]
         def missingHostMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, HostnameField.DEFAULT_FIELD_NAME]
         def missingPortMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, PortField.DEFAULT_FIELD_NAME]
         def missingEncryptMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, LdapEncryptionMethodField.DEFAULT_FIELD_NAME]
         def missingUsernameMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, CredentialsField.DEFAULT_FIELD_NAME, CredentialsField.USERNAME_FIELD_NAME]
-        def missingUserpasswordMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, CredentialsField.DEFAULT_FIELD_NAME, CredentialsField.USER_PASSWORD_FIELD_NAME]
+        def missingUserpasswordMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, CredentialsField.DEFAULT_FIELD_NAME, CredentialsField.PASSWORD_FIELD_NAME]
         def missingBindMethodMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, LdapBindMethod.DEFAULT_FIELD_NAME]
         def missingQueryBaseMsgPath = baseMsg + [LdapQuery.QUERY_BASE_FIELD_NAME]
         def missingQueryMsgPath = baseMsg + [LdapQueryField.DEFAULT_FIELD_NAME]
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         report.messages().size() == 8
@@ -83,16 +83,16 @@ class PerformLdapQueryTest extends Specification {
                 (LdapBindUserInfo.DEFAULT_FIELD_NAME)   : simpleBindInfo().getValue(),
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : exampleLdapQuery().getValue()]
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         report.messages().size() == 1
         report.result() == null
-        report.messages().get(0).getCode() == LdapMessages.CANNOT_CONNECT
-        report.messages().get(0).getPath() == [LdapQuery.ID, BaseAction.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
+        report.messages().get(0).getCode() == DefaultMessages.CANNOT_CONNECT
+        report.messages().get(0).getPath() == [LdapQuery.ID, BaseFunctionField.ARGUMENT, LdapConnectionField.DEFAULT_FIELD_NAME]
 
     }
 
@@ -103,16 +103,16 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : exampleLdapQuery().getValue()]
 
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         report.messages().size() == 1
         report.result() == null
         report.messages().get(0).getCode() == LdapMessages.CANNOT_BIND
-        report.messages().get(0).getPath() == [LdapQuery.ID, BaseAction.ARGUMENT, LdapBindUserInfo.DEFAULT_FIELD_NAME]
+        report.messages().get(0).getPath() == [LdapQuery.ID, BaseFunctionField.ARGUMENT, LdapBindUserInfo.DEFAULT_FIELD_NAME]
     }
 
     def 'Successfully query with entries found (No encryption)'() {
@@ -122,10 +122,10 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : ldapQuery("(objectClass=person)").getValue()]
 
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         def entries = report.result().getList()
@@ -142,11 +142,11 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : ldapQuery("(objectClass=person)").getValue()]
 
-        action.setTestingUtils(new TestLdapConnectionTest.LdapTestingUtilsMock())
-        action.setArguments(args)
+        ldapQueryFunction.setTestingUtils(new TestLdapConnectionTest.LdapTestingUtilsMock())
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         def entries = report.result().getList()
@@ -163,10 +163,10 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : ldapQuery("(uid=NOT_REAL)").getValue()]
 
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         def entries = report.result().getList()
@@ -181,10 +181,10 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.MAX_QUERY_FIELD_NAME)        : 1,
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : ldapQuery("(objectClass=person)").getValue()]
 
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         def entries = report.result().getList()
@@ -201,10 +201,10 @@ class PerformLdapQueryTest extends Specification {
                 (LdapQuery.QUERY_BASE_FIELD_NAME)       : exampleQueryBase().getValue(),
                 (LdapQueryField.DEFAULT_FIELD_NAME)     : ldapQuery("(objectClass=person)").getValue()]
 
-        action.setArguments(args)
+        ldapQueryFunction.setValue(args)
 
         when:
-        ActionReport report = action.process()
+        FunctionReport report = ldapQueryFunction.getValue()
 
         then:
         def entries = report.result().getList()

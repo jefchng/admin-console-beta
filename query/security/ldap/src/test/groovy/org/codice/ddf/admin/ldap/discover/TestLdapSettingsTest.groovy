@@ -13,9 +13,6 @@
  **/
 package org.codice.ddf.admin.ldap.discover
 
-import org.codice.ddf.admin.api.action.ActionReport
-import org.codice.ddf.admin.common.actions.BaseAction
-import org.codice.ddf.admin.common.report.message.DefaultMessages
 import org.codice.ddf.admin.ldap.LdapTestingCommons
 import org.codice.ddf.admin.ldap.TestLdapServer
 import spock.lang.Ignore
@@ -41,31 +38,8 @@ class TestLdapSettingsTest extends Specification {
         action = new LdapTestSettings()
     }
 
+    @Ignore
     def 'Fail on missing required fields'() {
-        setup:
-        def baseMsg = [LdapTestSettings.ID, BaseAction.ARGUMENT]
-//        def missingHostMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, HostnameField.DEFAULT_FIELD_NAME]
-//        def missingPortMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, PortField.DEFAULT_FIELD_NAME]
-//        def missingEncryptMsgPath = baseMsg + [LdapConnectionField.DEFAULT_FIELD_NAME, LdapEncryptionMethodField.DEFAULT_FIELD_NAME]
-//        def missingUsernameMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, CredentialsField.DEFAULT_FIELD_NAME, CredentialsField.USERNAME_FIELD_NAME]
-//        def missingUserpasswordMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, CredentialsField.DEFAULT_FIELD_NAME, CredentialsField.USER_PASSWORD_FIELD_NAME]
-//        def missingBindMethodMsgPath = baseMsg + [LdapBindUserInfo.DEFAULT_FIELD_NAME, LdapBindMethod.DEFAULT_FIELD_NAME]
-//        def missingQueryBaseMsgPath = baseMsg + [PerformLdapQuery.QUERY_BASE_FIELD_NAME]
-//        def missingQueryMsgPath = baseMsg + [LdapQueryField.DEFAULT_FIELD_NAME]
-
-        when:
-        ActionReport report = action.process()
-
-        then:
-        report.messages().size() == 8
-        report.messages().count {
-            it.getCode() == DefaultMessages.MISSING_REQUIRED_FIELD
-        } == 8
-        report.result() == null
-
-//        report.messages()*.getPath() as Set == [missingHostMsgPath, missingPortMsgPath, missingEncryptMsgPath,
-//                                                missingUsernameMsgPath, missingUserpasswordMsgPath, missingBindMethodMsgPath,
-//                                                missingQueryBaseMsgPath, missingQueryMsgPath] as Set
     }
 
     @Ignore

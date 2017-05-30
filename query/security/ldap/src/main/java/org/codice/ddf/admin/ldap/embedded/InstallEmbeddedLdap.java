@@ -13,7 +13,7 @@
  */
 package org.codice.ddf.admin.ldap.embedded;
 
-import static org.codice.ddf.admin.common.report.message.DefaultMessages.internalError;
+import static org.codice.ddf.admin.common.report.message.DefaultMessages.failedPersistError;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.ATTRIBUTE_STORE;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION;
 import static org.codice.ddf.admin.ldap.fields.config.LdapUseCase.AUTHENTICATION_AND_ATTRIBUTE_STORE;
@@ -80,7 +80,7 @@ public class InstallEmbeddedLdap extends BaseFunctionField<BooleanField> {
         OperationReport report = configurator.commit();
 
         if(report.containsFailedResults()) {
-            addResultMessage(internalError());
+            addResultMessage(failedPersistError());
         }
 
         return new BooleanField(report.containsFailedResults());

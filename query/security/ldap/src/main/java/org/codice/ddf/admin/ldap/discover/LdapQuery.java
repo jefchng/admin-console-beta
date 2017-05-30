@@ -84,7 +84,7 @@ public class LdapQuery extends BaseFunctionField<ListField<MapField>> {
     public ListField<MapField> performFunction() {
 
         LdapConnectionAttempt connectionAttempt = utils.bindUserToLdapConnection(conn, creds);
-        addMessages(connectionAttempt.messages());
+        addResultMessages(connectionAttempt.messages());
         addArgumentMessages(connectionAttempt.argumentMessages());
         ListField<MapField> entries = new ListFieldImpl<>(MapField.class);
 
