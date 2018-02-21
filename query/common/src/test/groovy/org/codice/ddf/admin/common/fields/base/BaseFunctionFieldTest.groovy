@@ -115,7 +115,7 @@ class BaseFunctionFieldTest extends Specification {
 
         TestBaseFunctionField(String functionName) {
             super(functionName, 'description')
-            stringArg = new StringField()
+            stringArg = new StringField().isRequired(true)
             testObjectField = new TestObjectField()
         }
 

@@ -26,7 +26,7 @@ class MapFieldTest extends Specification {
     static ENTRIES = PairField.ListImpl.DEFAULT_FIELD_NAME
 
     def setup() {
-        mapField = new MapField()
+        mapField = new MapField().isRequired(true)
         mapField.setPath(MAP_FIELD_PATH)
     }
 
@@ -92,12 +92,12 @@ class MapFieldTest extends Specification {
         duplicateValueMapField.setValue(duplicateValue)
         duplicateValueMapField.setPath(MAP_FIELD_PATH)
 
-        def emptyValue = [(ENTRIES): [createEntry('', '')]]
-        MapField emptyValueMapField = new MapField()
+        def emptyValue = [(ENTRIES): [createEntry('key2', '')]]
+        MapField emptyValueMapField = new MapField().isRequired(true)
         emptyValueMapField.setValue(emptyValue)
         emptyValueMapField.setPath(MAP_FIELD_PATH)
 
-        def missingValue = [(ENTRIES): [createEntry('', null)]]
+        def missingValue = [(ENTRIES): [createEntry('key3', null)]]
         MapField missingValueMapField = new MapField().isRequired(true)
         missingValueMapField.setValue(missingValue)
         missingValueMapField.setPath(MAP_FIELD_PATH)

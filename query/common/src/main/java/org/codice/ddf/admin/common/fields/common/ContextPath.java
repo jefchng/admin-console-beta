@@ -38,6 +38,7 @@ public class ContextPath extends StringField {
 
   public ContextPath() {
     super(DEFAULT_FIELD_NAME, FIELD_TYPE_NAME, DESCRIPTION);
+    this.isRequired(true);
   }
 
   public ContextPath(String path) {

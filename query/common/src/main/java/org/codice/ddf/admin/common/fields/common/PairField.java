@@ -39,8 +39,8 @@ public class PairField extends BaseObjectField {
 
   public PairField() {
     super(DEFAULT_FIELD_NAME, FIELD_TYPE_NAME, DESCRIPTION);
-    key = new StringField(KEY_FIELD_NAME);
-    value = new StringField(VALUE_FIELD_NAME);
+    key = new StringField(KEY_FIELD_NAME).isRequired(true);
+    value = new StringField(VALUE_FIELD_NAME).isRequired(true);
   }
 
   @Override

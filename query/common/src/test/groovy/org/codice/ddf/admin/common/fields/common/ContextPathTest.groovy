@@ -23,7 +23,7 @@ class ContextPathTest extends Specification {
     ContextPath contextPath
 
     def setup() {
-        contextPath = new ContextPath()
+        contextPath = new ContextPath().isRequired(true)
         contextPath.setPath(FIELD_PATH)
     }
 
@@ -73,7 +73,7 @@ class ContextPathTest extends Specification {
 
     def 'Returns all the possible error codes correctly'(){
         setup:
-        ContextPath emptyContextPath = new ContextPath()
+        ContextPath emptyContextPath = new ContextPath().isRequired(true)
         emptyContextPath.setValue('')
 
         ContextPath missingContextPath = new ContextPath().isRequired(true)

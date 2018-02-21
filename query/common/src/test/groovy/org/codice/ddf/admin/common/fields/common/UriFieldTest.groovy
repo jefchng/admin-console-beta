@@ -77,7 +77,7 @@ class UriFieldTest extends Specification {
         UriField invalidUriField = new UriField()
         invalidUriField.setValue('Inv@!id:U&i')
 
-        UriField emptyUriField = new UriField()
+        UriField emptyUriField = new UriField().isRequired(true)
         emptyUriField.setValue('')
 
         UriField missingUriField = new UriField().isRequired(true)

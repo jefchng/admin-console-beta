@@ -25,6 +25,7 @@ class HostnameFieldTest extends Specification {
     def setup() {
         hostnameField = new HostnameField()
         hostnameField.setPath(HOSTNAME_FIELD_PATH)
+        hostnameField.isRequired(true)
     }
 
     def 'Valid hostnames'() {
@@ -75,6 +76,7 @@ class HostnameFieldTest extends Specification {
     def 'Empty field when hostname provided but empty'() {
         setup:
         hostnameField.setValue('')
+        hostnameField.isRequired(true)
 
         when:
         def validationMsgs = hostnameField.validate()
